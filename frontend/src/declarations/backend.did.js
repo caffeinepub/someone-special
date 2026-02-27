@@ -25,15 +25,25 @@ export const idlService = IDL.Service({
         IDL.Int,
         IDL.Tuple(IDL.Float64, IDL.Float64),
       ],
-      [],
+      [IDL.Bool],
       [],
     ),
   'deleteHeartNote' : IDL.Func([IDL.Text], [], []),
   'editHeartNote' : IDL.Func([IDL.Text, IDL.Text], [], []),
   'getAllHeartNotes' : IDL.Func([], [IDL.Vec(HeartNote)], ['query']),
   'getHeartNote' : IDL.Func([IDL.Text], [HeartNote], ['query']),
+  'getHeartNotesForUser' : IDL.Func(
+      [IDL.Text],
+      [IDL.Vec(HeartNote)],
+      ['query'],
+    ),
   'getPersonalGreetingMessage' : IDL.Func([], [IDL.Text], ['query']),
   'updatePersonalGreetingMessage' : IDL.Func([IDL.Text], [], []),
+  'updatePosition' : IDL.Func(
+      [IDL.Text, IDL.Tuple(IDL.Float64, IDL.Float64)],
+      [],
+      [],
+    ),
 });
 
 export const idlInitArgs = [];
@@ -56,15 +66,25 @@ export const idlFactory = ({ IDL }) => {
           IDL.Int,
           IDL.Tuple(IDL.Float64, IDL.Float64),
         ],
-        [],
+        [IDL.Bool],
         [],
       ),
     'deleteHeartNote' : IDL.Func([IDL.Text], [], []),
     'editHeartNote' : IDL.Func([IDL.Text, IDL.Text], [], []),
     'getAllHeartNotes' : IDL.Func([], [IDL.Vec(HeartNote)], ['query']),
     'getHeartNote' : IDL.Func([IDL.Text], [HeartNote], ['query']),
+    'getHeartNotesForUser' : IDL.Func(
+        [IDL.Text],
+        [IDL.Vec(HeartNote)],
+        ['query'],
+      ),
     'getPersonalGreetingMessage' : IDL.Func([], [IDL.Text], ['query']),
     'updatePersonalGreetingMessage' : IDL.Func([IDL.Text], [], []),
+    'updatePosition' : IDL.Func(
+        [IDL.Text, IDL.Tuple(IDL.Float64, IDL.Float64)],
+        [],
+        [],
+      ),
   });
 };
 

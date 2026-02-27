@@ -4,8 +4,6 @@ import Array "mo:core/Array";
 import Order "mo:core/Order";
 import Runtime "mo:core/Runtime";
 
-
-
 actor {
   type HeartNote = {
     id : Text;
@@ -24,7 +22,7 @@ actor {
   let heartNotes = Map.empty<Text, HeartNote>();
   var personalGreetingMessage : Text = "Welcome to your love-filled online sanctuary!";
 
-  public shared ({ caller }) func addHeartNote(id : Text, creator : Text, message : Text, timestamp : Int, position : (Float, Float)) : async () {
+  public shared ({ caller }) func addHeartNote(id : Text, creator : Text, message : Text, timestamp : Int, position : (Float, Float)) : async Bool {
     switch (heartNotes.get(id)) {
       case (null) {
         let newNote : HeartNote = {
@@ -35,6 +33,7 @@ actor {
           position;
         };
         heartNotes.add(id, newNote);
+        true;
       };
       case (?_) { Runtime.trap("Heart note with this ID already exists") };
     };
@@ -53,6 +52,19 @@ actor {
     };
   };
 
+  public shared ({ caller }) func updatePosition(id : Text, newPosition : (Float, Float)) : async () {
+    switch (heartNotes.get(id)) {
+      case (null) { Runtime.trap("Heart note not found for position update") };
+      case (?existingNote) {
+        let updatedNote : HeartNote = {
+          existingNote with
+          position = newPosition;
+        };
+        heartNotes.add(id, updatedNote);
+      };
+    };
+  };
+
   public query ({ caller }) func getHeartNote(id : Text) : async HeartNote {
     switch (heartNotes.get(id)) {
       case (null) { Runtime.trap("Heart note not found") };
@@ -62,6 +74,19 @@ actor {
 
   public query ({ caller }) func getAllHeartNotes() : async [HeartNote] {
     heartNotes.values().toArray().sort();
+  };
+
+  public query ({ caller }) func getHeartNotesForUser(creator : Text) : async [HeartNote] {
+    let filteredNotes = heartNotes.toArray().filter(
+      func((_, note)) {
+        note.creator == creator;
+      }
+    );
+    filteredNotes.sort(
+      func((_, a), (_, b)) {
+        Text.compare(a.id, b.id);
+      }
+    ).map(func((_, note)) { note });
   };
 
   public shared ({ caller }) func deleteHeartNote(id : Text) : async () {

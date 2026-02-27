@@ -1,146 +1,354 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react';
-import type { HeartNote } from '../backend';
-import NoteCard from './NoteCard';
+import { useState, useRef, useCallback, useEffect } from "react";
+import { Heart } from "lucide-react";
+import { HeartNote } from "../backend";
+import NoteCard from "./NoteCard";
+import { useUpdateHeartPosition } from "../hooks/useQueries";
 
 interface HeartCanvasProps {
   notes: HeartNote[];
-  onEdit?: (note: HeartNote) => void;
-  onDelete?: (id: string) => void;
 }
 
-interface HeartConfig {
-  floatDuration: string;
-  floatDelay: string;
-  pulseDuration: string;
-  pulseDelay: string;
-  size: number;
-  animationType: 'float' | 'pulse';
+const HEART_SIZE = 32;
+const CARD_WIDTH = 288;
+const CARD_HEIGHT_ESTIMATE = 160;
+
+// Minimum pixel movement to count as a drag (not a click)
+const DRAG_THRESHOLD = 6;
+
+interface CardLayout {
+  translateX: number;
+  openUpward: boolean;
+  openLeftward: boolean;
 }
 
-function getHeartConfig(id: string): HeartConfig {
-  // Deterministic pseudo-random based on id
-  let hash = 0;
-  for (let i = 0; i < id.length; i++) {
-    hash = ((hash << 5) - hash) + id.charCodeAt(i);
-    hash |= 0;
+interface DragState {
+  noteId: string;
+  startMouseX: number;
+  startMouseY: number;
+  startPctX: number;
+  startPctY: number;
+  hasMoved: boolean;
+  // Live position while dragging (percentages)
+  currentPctX: number;
+  currentPctY: number;
+}
+
+function computeCardLayout(
+  heartEl: HTMLElement,
+  containerEl: HTMLElement
+): CardLayout {
+  const heartRect = heartEl.getBoundingClientRect();
+  const containerRect = containerEl.getBoundingClientRect();
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+
+  const heartCenterX = heartRect.left + heartRect.width / 2;
+
+  const spaceBelow = vh - heartRect.bottom;
+  const openUpward = spaceBelow < CARD_HEIGHT_ESTIMATE + 20;
+
+  const heartLeftInContainer = heartRect.left - containerRect.left;
+  const idealCardLeft = heartLeftInContainer + heartRect.width / 2 - CARD_WIDTH / 2;
+
+  const MARGIN = 8;
+  const containerLeft = containerRect.left;
+
+  let cardLeftViewport = containerLeft + idealCardLeft;
+  let cardRightViewport = cardLeftViewport + CARD_WIDTH;
+
+  let clampedCardLeft = idealCardLeft;
+
+  if (cardLeftViewport < MARGIN) {
+    clampedCardLeft = idealCardLeft + (MARGIN - cardLeftViewport);
+  } else if (cardRightViewport > vw - MARGIN) {
+    clampedCardLeft = idealCardLeft - (cardRightViewport - (vw - MARGIN));
   }
-  const abs = Math.abs(hash);
-  return {
-    floatDuration: `${2.5 + (abs % 20) / 5}s`,
-    floatDelay: `${(abs % 15) / 5}s`,
-    pulseDuration: `${1.8 + (abs % 12) / 6}s`,
-    pulseDelay: `${(abs % 10) / 5}s`,
-    size: 48 + (abs % 32),
-    animationType: abs % 2 === 0 ? 'float' : 'pulse',
-  };
+
+  const translateX = clampedCardLeft;
+  const cardCenterX = containerLeft + clampedCardLeft + CARD_WIDTH / 2;
+  const openLeftward = cardCenterX < heartCenterX;
+
+  return { translateX, openUpward, openLeftward };
 }
 
-const HeartCanvas: React.FC<HeartCanvasProps> = ({ notes, onEdit, onDelete }) => {
+export default function HeartCanvas({ notes }: HeartCanvasProps) {
   const [activeNoteId, setActiveNoteId] = useState<string | null>(null);
+  const [cardLayouts, setCardLayouts] = useState<Record<string, CardLayout>>({});
+  // Optimistic positions while dragging (overrides note.position)
+  const [dragPositions, setDragPositions] = useState<Record<string, [number, number]>>({});
+
   const containerRef = useRef<HTMLDivElement>(null);
+  const heartRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const dragStateRef = useRef<DragState | null>(null);
 
-  const handleHeartClick = useCallback((id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setActiveNoteId(prev => prev === id ? null : id);
+  const updatePosition = useUpdateHeartPosition();
+
+  // ── Mouse move handler (attached to window during drag) ──────────────────
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    const drag = dragStateRef.current;
+    if (!drag || !containerRef.current) return;
+
+    const dx = e.clientX - drag.startMouseX;
+    const dy = e.clientY - drag.startMouseY;
+
+    if (!drag.hasMoved && Math.sqrt(dx * dx + dy * dy) < DRAG_THRESHOLD) return;
+
+    drag.hasMoved = true;
+
+    const containerRect = containerRef.current.getBoundingClientRect();
+    const newPctX = ((e.clientX - containerRect.left) / containerRect.width) * 100;
+    const newPctY = ((e.clientY - containerRect.top) / containerRect.height) * 100;
+
+    // Clamp to [1, 99] so hearts stay within the canvas
+    const clampedX = Math.min(99, Math.max(1, newPctX));
+    const clampedY = Math.min(99, Math.max(1, newPctY));
+
+    drag.currentPctX = clampedX;
+    drag.currentPctY = clampedY;
+
+    setDragPositions((prev) => ({
+      ...prev,
+      [drag.noteId]: [clampedX, clampedY],
+    }));
   }, []);
 
-  const handleClose = useCallback(() => {
-    setActiveNoteId(null);
-  }, []);
+  // ── Mouse up handler (attached to window during drag) ────────────────────
+  const handleMouseUp = useCallback(() => {
+    const drag = dragStateRef.current;
+    if (!drag) return;
 
-  // Close on outside click
+    if (drag.hasMoved) {
+      // Persist new position to backend
+      updatePosition.mutate(
+        { id: drag.noteId, newPosition: [drag.currentPctX, drag.currentPctY] },
+        {
+          onSuccess: () => {
+            // Clear optimistic override once backend confirms
+            setDragPositions((prev) => {
+              const next = { ...prev };
+              delete next[drag.noteId];
+              return next;
+            });
+          },
+        }
+      );
+      // Close any open card after a drag
+      setActiveNoteId(null);
+    }
+
+    dragStateRef.current = null;
+
+    window.removeEventListener("mousemove", handleMouseMove);
+    window.removeEventListener("mouseup", handleMouseUp);
+  }, [handleMouseMove, updatePosition]);
+
+  // ── Mouse down on a heart ────────────────────────────────────────────────
+  const handleHeartMouseDown = useCallback(
+    (e: React.MouseEvent, note: HeartNote) => {
+      // Only respond to primary button
+      if (e.button !== 0) return;
+      e.preventDefault();
+
+      const [startPctX, startPctY] = note.position;
+
+      dragStateRef.current = {
+        noteId: note.id,
+        startMouseX: e.clientX,
+        startMouseY: e.clientY,
+        startPctX,
+        startPctY,
+        hasMoved: false,
+        currentPctX: startPctX,
+        currentPctY: startPctY,
+      };
+
+      window.addEventListener("mousemove", handleMouseMove);
+      window.addEventListener("mouseup", handleMouseUp);
+    },
+    [handleMouseMove, handleMouseUp]
+  );
+
+  // ── Click handler (only fires when not dragging) ─────────────────────────
+  const handleHeartClick = useCallback(
+    (noteId: string) => {
+      // If a drag just finished, ignore the synthetic click
+      if (dragStateRef.current?.hasMoved) return;
+
+      if (activeNoteId === noteId) {
+        setActiveNoteId(null);
+        return;
+      }
+
+      const heartEl = heartRefs.current[noteId];
+      const containerEl = containerRef.current;
+
+      if (heartEl && containerEl) {
+        const layout = computeCardLayout(heartEl, containerEl);
+        setCardLayouts((prev) => ({ ...prev, [noteId]: layout }));
+      }
+
+      setActiveNoteId(noteId);
+    },
+    [activeNoteId]
+  );
+
+  // ── Touch support ────────────────────────────────────────────────────────
+  const handleTouchStart = useCallback(
+    (e: React.TouchEvent, note: HeartNote) => {
+      const touch = e.touches[0];
+      const [startPctX, startPctY] = note.position;
+
+      dragStateRef.current = {
+        noteId: note.id,
+        startMouseX: touch.clientX,
+        startMouseY: touch.clientY,
+        startPctX,
+        startPctY,
+        hasMoved: false,
+        currentPctX: startPctX,
+        currentPctY: startPctY,
+      };
+
+      const onTouchMove = (ev: TouchEvent) => {
+        const drag = dragStateRef.current;
+        if (!drag || !containerRef.current) return;
+        const t = ev.touches[0];
+        const dx = t.clientX - drag.startMouseX;
+        const dy = t.clientY - drag.startMouseY;
+
+        if (!drag.hasMoved && Math.sqrt(dx * dx + dy * dy) < DRAG_THRESHOLD) return;
+        drag.hasMoved = true;
+        ev.preventDefault();
+
+        const containerRect = containerRef.current.getBoundingClientRect();
+        const newPctX = ((t.clientX - containerRect.left) / containerRect.width) * 100;
+        const newPctY = ((t.clientY - containerRect.top) / containerRect.height) * 100;
+        const clampedX = Math.min(99, Math.max(1, newPctX));
+        const clampedY = Math.min(99, Math.max(1, newPctY));
+
+        drag.currentPctX = clampedX;
+        drag.currentPctY = clampedY;
+
+        setDragPositions((prev) => ({
+          ...prev,
+          [drag.noteId]: [clampedX, clampedY],
+        }));
+      };
+
+      const onTouchEnd = () => {
+        const drag = dragStateRef.current;
+        if (!drag) return;
+
+        if (drag.hasMoved) {
+          updatePosition.mutate(
+            { id: drag.noteId, newPosition: [drag.currentPctX, drag.currentPctY] },
+            {
+              onSuccess: () => {
+                setDragPositions((prev) => {
+                  const next = { ...prev };
+                  delete next[drag.noteId];
+                  return next;
+                });
+              },
+            }
+          );
+          setActiveNoteId(null);
+        } else {
+          // Treat as click
+          handleHeartClick(drag.noteId);
+        }
+
+        dragStateRef.current = null;
+        window.removeEventListener("touchmove", onTouchMove);
+        window.removeEventListener("touchend", onTouchEnd);
+      };
+
+      window.addEventListener("touchmove", onTouchMove, { passive: false });
+      window.addEventListener("touchend", onTouchEnd);
+    },
+    [handleHeartClick, updatePosition]
+  );
+
+  // Cleanup listeners on unmount
   useEffect(() => {
-    const handleOutsideClick = () => setActiveNoteId(null);
-    document.addEventListener('click', handleOutsideClick);
-    return () => document.removeEventListener('click', handleOutsideClick);
-  }, []);
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [handleMouseMove, handleMouseUp]);
 
-  const activeNote = notes.find(n => n.id === activeNoteId);
+  const isDraggingAny = dragStateRef.current !== null;
 
   return (
     <div
       ref={containerRef}
-      className="relative w-full"
-      style={{ minHeight: '520px' }}
+      className="relative w-full overflow-hidden"
+      style={{
+        minHeight: 480,
+        background: "transparent",
+        cursor: isDraggingAny ? "grabbing" : "default",
+        userSelect: "none",
+      }}
     >
       {notes.map((note) => {
-        const config = getHeartConfig(note.id);
-        const [xPct, yPct] = note.position;
+        // Use optimistic drag position if available, otherwise use stored position
+        const [x, y] = dragPositions[note.id] ?? note.position;
         const isActive = activeNoteId === note.id;
-
-        // Clamp positions to keep hearts visible
-        const clampedX = Math.max(5, Math.min(90, xPct * 100));
-        const clampedY = Math.max(5, Math.min(90, yPct * 100));
-
-        // If the heart is in the lower 45% of the canvas, open the card upward
-        const openUpward = clampedY > 55;
+        const isDraggingThis = dragStateRef.current?.noteId === note.id && dragStateRef.current?.hasMoved;
+        const layout = cardLayouts[note.id] ?? {
+          translateX: 0,
+          openUpward: false,
+          openLeftward: false,
+        };
 
         return (
           <div
             key={note.id}
             className="absolute"
             style={{
-              left: `${clampedX}%`,
-              top: `${clampedY}%`,
-              transform: 'translate(-50%, -50%)',
-              zIndex: isActive ? 40 : 10,
+              left: `${x}%`,
+              top: `${y}%`,
+              transform: "translate(-50%, -50%)",
+              zIndex: isDraggingThis ? 50 : isActive ? 40 : 1,
+              transition: isDraggingThis ? "none" : "left 0.15s ease, top 0.15s ease",
             }}
           >
             {/* Heart button */}
             <button
-              onClick={(e) => handleHeartClick(note.id, e)}
-              className={`
-                relative group cursor-pointer transition-transform duration-200
-                ${config.animationType === 'float' ? 'heart-float' : 'heart-pulse'}
-                ${isActive ? 'scale-125' : 'hover:scale-110'}
-              `}
-              style={{
-                '--float-duration': config.floatDuration,
-                '--float-delay': config.floatDelay,
-                '--pulse-duration': config.pulseDuration,
-                '--pulse-delay': config.pulseDelay,
-                width: config.size,
-                height: config.size,
-              } as React.CSSProperties}
-              aria-label={`Open note: ${note.message.slice(0, 30)}...`}
+              ref={(el) => {
+                heartRefs.current[note.id] = el;
+              }}
+              onMouseDown={(e) => handleHeartMouseDown(e, note)}
+              onClick={() => handleHeartClick(note.id)}
+              onTouchStart={(e) => handleTouchStart(e, note)}
+              className="relative group focus:outline-none"
+              style={{ cursor: isDraggingThis ? "grabbing" : "grab" }}
+              title={note.creator}
+              aria-label={`Heart from ${note.creator}`}
             >
-              <img
-                src="/assets/generated/heart-icon.dim_128x128.png"
-                alt="Heart note"
-                className="w-full h-full object-contain drop-shadow-md"
-                style={{
-                  filter: isActive
-                    ? 'drop-shadow(0 0 12px oklch(0.65 0.22 15 / 0.8))'
-                    : 'drop-shadow(0 2px 6px oklch(0.55 0.18 15 / 0.4))',
-                }}
+              <Heart
+                size={HEART_SIZE}
+                className={`
+                  transition-transform duration-200
+                  ${isActive
+                    ? "fill-rose-600 text-rose-600 scale-125"
+                    : isDraggingThis
+                    ? "fill-rose-500 text-rose-500 scale-110 drop-shadow-lg"
+                    : "fill-rose-400 text-rose-400 hover:fill-rose-500 hover:text-rose-500 hover:scale-110 animate-heart-float"
+                  }
+                `}
               />
-              {/* Tooltip on hover */}
-              <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-foreground text-background text-xs px-2 py-1 rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none font-sans">
-                Click to read ♥
-              </span>
             </button>
 
-            {/* Note card — opens below or above depending on position */}
-            {isActive && activeNote && (
+            {/* Note card */}
+            {isActive && !isDraggingThis && (
               <NoteCard
-                note={activeNote}
-                onClose={handleClose}
-                onEdit={onEdit}
-                onDelete={onDelete}
-                openUpward={openUpward}
-                style={
-                  openUpward
-                    ? {
-                        bottom: config.size + 8,
-                        left: '50%',
-                        transform: 'translateX(-50%)',
-                      }
-                    : {
-                        top: config.size + 8,
-                        left: '50%',
-                        transform: 'translateX(-50%)',
-                      }
-                }
+                note={note}
+                onClose={() => setActiveNoteId(null)}
+                translateX={layout.translateX}
+                openUpward={layout.openUpward}
+                openLeftward={layout.openLeftward}
+                heartSize={HEART_SIZE}
               />
             )}
           </div>
@@ -148,18 +356,12 @@ const HeartCanvas: React.FC<HeartCanvasProps> = ({ notes, onEdit, onDelete }) =>
       })}
 
       {notes.length === 0 && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
-          <div className="text-6xl mb-4 opacity-30">💝</div>
-          <p className="font-serif text-muted-foreground text-lg italic">
-            No hearts yet...
-          </p>
-          <p className="text-muted-foreground text-sm mt-1">
-            Add the first heart note below
+        <div className="absolute inset-0 flex items-center justify-center">
+          <p className="font-serif text-rose-300 italic text-lg">
+            No hearts yet — be the first to leave one 💕
           </p>
         </div>
       )}
     </div>
   );
-};
-
-export default HeartCanvas;
+}

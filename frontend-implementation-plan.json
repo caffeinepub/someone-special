@@ -1,27 +1,45 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Fix unreadable note messages at the bottom of the site",
+  "title": "Add drag-to-reposition hearts on the canvas",
   "requirements": [
     {
-      "id": "REQ-8",
-      "summary": "Fix text visibility and contrast for NoteCard popups displayed at the bottom of the site to ensure clear readability against backgrounds in all canvas positions",
+      "id": "REQ-1",
+      "summary": "Add a drag-and-drop interaction to each heart icon on the HeartCanvas so users can click and drag a heart to reposition it anywhere on the canvas, with smooth cursor following and backend persistence of new positions as percentage coordinates.",
       "acceptanceCriteria": [
-        "NoteCard popup text (message, creator, date) is clearly readable regardless of its vertical position on the page",
-        "Text contrast meets a minimum ratio of 4.5:1 against the card background",
-        "NoteCard background has sufficient opacity or solid fill so underlying decorative elements do not bleed through and reduce readability",
-        "The fix applies consistently for all heart notes whether they appear near the top, middle, or bottom of the canvas"
+        "Each heart on the canvas can be dragged by clicking and holding it.",
+        "While dragging, the heart visually follows the mouse cursor.",
+        "Dropping the heart anywhere on the canvas updates its position.",
+        "The new position is saved to the backend (x/y as percentages of canvas dimensions) so it persists after page refresh.",
+        "Clicking a heart (without dragging) still opens its NoteCard popup as before.",
+        "All existing heart functionality (add, edit, delete, NoteCard popup) remains unchanged."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/NoteCard.tsx",
+          "path": "frontend/src/components/HeartCanvas.tsx",
           "operation": "modify",
-          "description": "Improve text contrast and background opacity for the NoteCard component. Ensure the card background is fully opaque or has a solid fill to prevent decorative elements from bleeding through. Apply text color overrides with sufficient contrast (minimum 4.5:1 ratio) so message text, creator name, and date are clearly readable. Preserve the romantic styling while enhancing legibility for cards positioned anywhere on the canvas, especially near the bottom where the issue was reported."
+          "description": "Add drag-and-drop interaction handlers (onMouseDown, onMouseMove, onMouseUp) to each heart icon. Track dragging state (isDragging, draggedHeartId, dragOffset) to differentiate between click and drag gestures. While dragging, update the heart's position to follow the cursor smoothly using inline styles. On drop, calculate the new position as percentages of the canvas dimensions and call the useUpdateHeartPosition mutation to persist the change. Ensure that a simple click (without drag movement) still opens the NoteCard popup as before. Maintain all existing smart card layout logic for NoteCard positioning."
         },
         {
-          "path": "frontend/src/index.css",
+          "path": "frontend/src/hooks/useQueries.ts",
           "operation": "modify",
-          "description": "Add or adjust CSS custom properties and utility classes to support improved text contrast for note cards. Define high-contrast text color tokens if needed and ensure background color tokens provide sufficient opacity. Keep the romantic rose/blush/cream palette intact while ensuring readability standards are met across all theme modes."
+          "description": "Add a useUpdateHeartPosition mutation hook that calls the backend updatePosition function with the note ID and new [x, y] percentage coordinates. On success, invalidate the heartNotes query cache to trigger a re-fetch and update the canvas display. Export the new hook alongside existing mutation hooks."
+        }
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "summary": "Add a useUpdateHeartPosition mutation hook in useQueries.ts that calls the backend updatePosition function and invalidates the heart notes query on success.",
+      "acceptanceCriteria": [
+        "A `useUpdateHeartPosition` mutation hook is defined and exported from useQueries.ts.",
+        "On success it invalidates the heartNotes query cache so the canvas re-renders with updated positions.",
+        "The hook is used by HeartCanvas to persist positions after a drag-and-drop."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/hooks/useQueries.ts",
+          "operation": "modify",
+          "description": "Define and export useUpdateHeartPosition as a useMutation hook that accepts (id: string, newPosition: [number, number]) and calls backend.updatePosition(id, newPosition). On success, call queryClient.invalidateQueries(['heartNotes']) to refresh the canvas with updated positions. Follow the same pattern as useEditHeartNote and useDeleteHeartNote for consistency."
         }
       ]
     }

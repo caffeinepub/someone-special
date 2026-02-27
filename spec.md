@@ -1,12 +1,12 @@
 # Specification
 
 ## Summary
-**Goal:** Fix unreadable note/NoteCard popup text at the bottom of the site by improving text contrast and background visibility.
+**Goal:** Allow users to drag and reposition heart icons anywhere on the HeartCanvas, with positions persisted to the backend.
 
 **Planned changes:**
-- Ensure NoteCard popup text (message, creator name, date) has sufficient color contrast (minimum 4.5:1 ratio) against the card background
-- Apply a solid or sufficiently opaque background fill to NoteCard so decorative elements do not bleed through and reduce legibility
-- Override text colors as needed so romantic styling does not obscure readability
-- Apply the fix consistently for all heart note positions (top, middle, bottom of canvas)
+- Add drag-and-drop interaction to each heart on HeartCanvas so it follows the cursor while dragging and drops to a new position
+- Distinguish between a click (opens NoteCard popup) and a drag (repositions heart) so existing popup behavior is preserved
+- Add an `updatePosition(id, x, y)` function to the backend HeartNote actor that updates a note's stored x/y coordinates (as percentages)
+- Add a `useUpdateHeartPosition` mutation hook in useQueries.ts that calls the backend function and invalidates the heartNotes query cache on success
 
-**User-visible outcome:** Note messages displayed on the canvas are clearly readable in all positions, with legible text and sufficient background contrast regardless of where they appear on the page.
+**User-visible outcome:** Users can click and drag any heart on the canvas to move it to their desired location; the new position is saved and persists after page refresh, while all existing functionality (add, edit, delete, NoteCard popup) remains unchanged.

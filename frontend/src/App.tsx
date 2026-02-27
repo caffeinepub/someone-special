@@ -1,27 +1,15 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Heart } from 'lucide-react';
 import { Toaster } from '@/components/ui/sonner';
 import FloatingPetals from './components/FloatingPetals';
 import HeartCanvas from './components/HeartCanvas';
 import AddHeartForm from './components/AddHeartForm';
-import EditNoteModal from './components/EditNoteModal';
 import PersonalGreeting from './components/PersonalGreeting';
 import AdminGreetingEditor from './components/AdminGreetingEditor';
-import { useGetAllHeartNotes, useDeleteHeartNote } from './hooks/useQueries';
-import type { HeartNote } from './backend';
+import { useGetAllHeartNotes } from './hooks/useQueries';
 
 const App: React.FC = () => {
   const { data: notes = [], isLoading } = useGetAllHeartNotes();
-  const deleteNote = useDeleteHeartNote();
-  const [editingNote, setEditingNote] = useState<HeartNote | null>(null);
-
-  const handleDelete = async (id: string) => {
-    try {
-      await deleteNote.mutateAsync(id);
-    } catch (err) {
-      console.error('Failed to delete note:', err);
-    }
-  };
 
   const appId = encodeURIComponent(
     typeof window !== 'undefined' ? window.location.hostname : 'someone-special'
@@ -91,13 +79,13 @@ const App: React.FC = () => {
 
         {/* Heart Canvas */}
         <section
-          className="relative rounded-3xl border border-border bg-card/60 backdrop-blur-sm shadow-xs overflow-hidden mb-10"
+          className="relative rounded-3xl border border-border bg-card/60 backdrop-blur-sm shadow-xs overflow-visible mb-10"
           style={{ minHeight: '520px' }}
           aria-label="Heart notes canvas"
         >
           {/* Subtle inner gradient */}
           <div
-            className="absolute inset-0 pointer-events-none"
+            className="absolute inset-0 pointer-events-none rounded-3xl"
             style={{
               background:
                 'radial-gradient(ellipse 70% 50% at 50% 50%, oklch(0.97 0.012 15 / 0.5) 0%, transparent 100%)',
@@ -121,11 +109,7 @@ const App: React.FC = () => {
               </p>
             </div>
           ) : (
-            <HeartCanvas
-              notes={notes}
-              onEdit={setEditingNote}
-              onDelete={handleDelete}
-            />
+            <HeartCanvas notes={notes} />
           )}
         </section>
 
@@ -173,12 +157,6 @@ const App: React.FC = () => {
           </div>
         </div>
       </footer>
-
-      {/* Edit Modal */}
-      <EditNoteModal
-        note={editingNote}
-        onClose={() => setEditingNote(null)}
-      />
 
       <Toaster />
     </div>

@@ -2,10 +2,11 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-fix-the-text-visibility-and-contrast-issue-for-heart-note-messages-notecard-popups-displayed-at-the-bottom-of-the-site-ensure-the-note-text-creator-name-and-date-are-clearly-readable-against-their-background-in-all-positions-on-the-canvas-applying-sufficient-contrast-ratios-and-appropriate-text-color-overrides-so-the-romantic-styling-does-not-obscure-legibility",
-      "featureTitle": "Fix the text visibility and contrast issue for heart note messages/NoteCard popups displayed at the bottom of the site. Ensure the note text, creator name, and date are clearly readable against their background in all positions on the canvas, applying sufficient contrast ratios and appropriate text color overrides so the romantic styling does not obscure legibility.",
+      "featureId": "feature-add-a-drag-and-drop-interaction-to-each-heart-icon-on-the-heartcanvas-so-users-can-click-and-drag-a-heart-to-reposition-it-anywhere-on-the-canvas-while-dragging-the-heart-should-follow-the-cursor-smoothly-on-drop-the-new-position-as-percentage-coordinates-relative-to-the-canvas-must-be-persisted-to-the-backend",
+      "featureTitle": "Add a drag-and-drop interaction to each heart icon on the HeartCanvas so users can click and drag a heart to reposition it anywhere on the canvas. While dragging, the heart should follow the cursor smoothly. On drop, the new position (as percentage coordinates relative to the canvas) must be persisted to the backend.",
       "files": [
-        "frontend/src/components/NoteCard.tsx"
+        "frontend/src/components/HeartCanvas.tsx",
+        "frontend/src/hooks/useQueries.ts"
       ],
       "components": [
         "core-infrastructure@1.0.2",
@@ -15,7 +16,25 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-8"
+        "REQ-1"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-add-a-useupdateheartposition-mutation-hook-in-usequeries-ts-that-calls-the-backend-updateposition-function-and-invalidates-the-heart-notes-query-on-success",
+      "featureTitle": "Add a `useUpdateHeartPosition` mutation hook in useQueries.ts that calls the backend `updatePosition` function and invalidates the heart notes query on success.",
+      "files": [
+        "frontend/src/hooks/useQueries.ts"
+      ],
+      "components": [
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-3"
       ],
       "confidence": "high"
     }

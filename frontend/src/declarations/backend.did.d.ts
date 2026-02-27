@@ -20,14 +20,16 @@ export interface HeartNote {
 export interface _SERVICE {
   'addHeartNote' : ActorMethod<
     [string, string, string, bigint, [number, number]],
-    undefined
+    boolean
   >,
   'deleteHeartNote' : ActorMethod<[string], undefined>,
   'editHeartNote' : ActorMethod<[string, string], undefined>,
   'getAllHeartNotes' : ActorMethod<[], Array<HeartNote>>,
   'getHeartNote' : ActorMethod<[string], HeartNote>,
+  'getHeartNotesForUser' : ActorMethod<[string], Array<HeartNote>>,
   'getPersonalGreetingMessage' : ActorMethod<[], string>,
   'updatePersonalGreetingMessage' : ActorMethod<[string], undefined>,
+  'updatePosition' : ActorMethod<[string, [number, number]], undefined>,
 }
 export declare const idlService: IDL.ServiceClass;
 export declare const idlInitArgs: IDL.Type[];

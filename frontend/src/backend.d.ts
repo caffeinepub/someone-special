@@ -15,11 +15,13 @@ export interface HeartNote {
     position: [number, number];
 }
 export interface backendInterface {
-    addHeartNote(id: string, creator: string, message: string, timestamp: bigint, position: [number, number]): Promise<void>;
+    addHeartNote(id: string, creator: string, message: string, timestamp: bigint, position: [number, number]): Promise<boolean>;
     deleteHeartNote(id: string): Promise<void>;
     editHeartNote(id: string, newMessage: string): Promise<void>;
     getAllHeartNotes(): Promise<Array<HeartNote>>;
     getHeartNote(id: string): Promise<HeartNote>;
+    getHeartNotesForUser(creator: string): Promise<Array<HeartNote>>;
     getPersonalGreetingMessage(): Promise<string>;
     updatePersonalGreetingMessage(newMessage: string): Promise<void>;
+    updatePosition(id: string, newPosition: [number, number]): Promise<void>;
 }

@@ -97,17 +97,19 @@ export interface HeartNote {
     position: [number, number];
 }
 export interface backendInterface {
-    addHeartNote(id: string, creator: string, message: string, timestamp: bigint, position: [number, number]): Promise<void>;
+    addHeartNote(id: string, creator: string, message: string, timestamp: bigint, position: [number, number]): Promise<boolean>;
     deleteHeartNote(id: string): Promise<void>;
     editHeartNote(id: string, newMessage: string): Promise<void>;
     getAllHeartNotes(): Promise<Array<HeartNote>>;
     getHeartNote(id: string): Promise<HeartNote>;
+    getHeartNotesForUser(creator: string): Promise<Array<HeartNote>>;
     getPersonalGreetingMessage(): Promise<string>;
     updatePersonalGreetingMessage(newMessage: string): Promise<void>;
+    updatePosition(id: string, newPosition: [number, number]): Promise<void>;
 }
 export class Backend implements backendInterface {
     constructor(private actor: ActorSubclass<_SERVICE>, private _uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, private _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, private processError?: (error: unknown) => never){}
-    async addHeartNote(arg0: string, arg1: string, arg2: string, arg3: bigint, arg4: [number, number]): Promise<void> {
+    async addHeartNote(arg0: string, arg1: string, arg2: string, arg3: bigint, arg4: [number, number]): Promise<boolean> {
         if (this.processError) {
             try {
                 const result = await this.actor.addHeartNote(arg0, arg1, arg2, arg3, arg4);
@@ -177,6 +179,20 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async getHeartNotesForUser(arg0: string): Promise<Array<HeartNote>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getHeartNotesForUser(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getHeartNotesForUser(arg0);
+            return result;
+        }
+    }
     async getPersonalGreetingMessage(): Promise<string> {
         if (this.processError) {
             try {
@@ -202,6 +218,20 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.updatePersonalGreetingMessage(arg0);
+            return result;
+        }
+    }
+    async updatePosition(arg0: string, arg1: [number, number]): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.updatePosition(arg0, arg1);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.updatePosition(arg0, arg1);
             return result;
         }
     }
