@@ -1,5 +1,5 @@
 import React from 'react';
-import { Heart } from 'lucide-react';
+import { Heart, RefreshCw } from 'lucide-react';
 import { Toaster } from '@/components/ui/sonner';
 import FloatingPetals from './components/FloatingPetals';
 import HeartCanvas from './components/HeartCanvas';
@@ -9,7 +9,7 @@ import AdminGreetingEditor from './components/AdminGreetingEditor';
 import { useGetAllHeartNotes } from './hooks/useQueries';
 
 const App: React.FC = () => {
-  const { data: notes = [], isLoading } = useGetAllHeartNotes();
+  const { data: notes = [], isLoading, isError, error, refetch } = useGetAllHeartNotes();
 
   const appId = encodeURIComponent(
     typeof window !== 'undefined' ? window.location.hostname : 'someone-special'
@@ -107,6 +107,20 @@ const App: React.FC = () => {
               <p className="font-serif italic text-muted-foreground text-sm">
                 Loading your hearts...
               </p>
+            </div>
+          ) : isError ? (
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
+              <Heart className="w-10 h-10 text-rose-300" />
+              <p className="font-serif italic text-muted-foreground text-sm text-center px-4">
+                Couldn't load hearts right now.
+              </p>
+              <button
+                onClick={() => refetch()}
+                className="flex items-center gap-2 px-4 py-2 text-sm font-sans text-rose-600 border border-rose-200 rounded-full hover:bg-rose-50 transition-colors"
+              >
+                <RefreshCw size={14} />
+                Try again
+              </button>
             </div>
           ) : (
             <HeartCanvas notes={notes} />

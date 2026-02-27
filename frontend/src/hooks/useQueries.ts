@@ -9,9 +9,20 @@ export function useGetAllHeartNotes() {
     queryKey: ["heartNotes"],
     queryFn: async () => {
       if (!actor) return [];
-      return actor.getAllHeartNotes();
+      try {
+        const result = await actor.getAllHeartNotes();
+        return result;
+      } catch (err) {
+        console.error("Failed to fetch heart notes:", err);
+        throw err;
+      }
     },
     enabled: !!actor && !isFetching,
+    retry: 3,
+    retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 10000),
+    staleTime: 0,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 }
 
@@ -43,6 +54,9 @@ export function useAddHeartNote() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["heartNotes"] });
     },
+    onError: (err) => {
+      console.error("Failed to add heart note:", err);
+    },
   });
 }
 
@@ -60,6 +74,9 @@ export function useEditHeartNote() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["heartNotes"] });
+    },
+    onError: (err) => {
+      console.error("Failed to edit heart note:", err);
     },
   });
 }
@@ -79,6 +96,9 @@ export function useDeleteHeartNote() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["heartNotes"] });
     },
+    onError: (err) => {
+      console.error("Failed to delete heart note:", err);
+    },
   });
 }
 
@@ -97,6 +117,9 @@ export function useUpdateHeartPosition() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["heartNotes"] });
     },
+    onError: (err) => {
+      console.error("Failed to update heart position:", err);
+    },
   });
 }
 
@@ -110,6 +133,8 @@ export function usePersonalGreeting() {
       return actor.getPersonalGreetingMessage();
     },
     enabled: !!actor && !isFetching,
+    staleTime: 0,
+    refetchOnMount: true,
   });
 }
 
@@ -127,6 +152,9 @@ export function useUpdatePersonalGreeting() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["personalGreeting"] });
+    },
+    onError: (err) => {
+      console.error("Failed to update personal greeting:", err);
     },
   });
 }

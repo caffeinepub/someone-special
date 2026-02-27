@@ -1,77 +1,56 @@
 {
   "kind": "build_request",
-  "title": "Add drag-to-reposition hearts on the canvas",
+  "title": "Fix missing hearts after Version 7 deployment",
   "projectName": "Someone Special",
-  "priority": "normal",
+  "priority": "high",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Add a drag-and-drop interaction to each heart icon on the HeartCanvas so users can click and drag a heart to reposition it anywhere on the canvas. While dragging, the heart should follow the cursor smoothly. On drop, the new position (as percentage coordinates relative to the canvas) must be persisted to the backend.",
+      "text": "Investigate and fix the issue causing all heart notes to disappear from the HeartCanvas after the Version 7 deployment. Ensure that previously stored heart notes are correctly fetched from the backend and rendered on the canvas.",
       "target": "both",
       "source": {
         "messageIds": [
-          "msg-4"
+          "msg-7"
         ],
         "quotes": [
-          "add a option so that i can move the hearts around to my desired location"
+          "my hearts are gone"
         ]
       },
       "acceptanceCriteria": [
-        "Each heart on the canvas can be dragged by clicking and holding it.",
-        "While dragging, the heart visually follows the mouse cursor.",
-        "Dropping the heart anywhere on the canvas updates its position.",
-        "The new position is saved to the backend (x/y as percentages of canvas dimensions) so it persists after page refresh.",
-        "Clicking a heart (without dragging) still opens its NoteCard popup as before.",
-        "All existing heart functionality (add, edit, delete, NoteCard popup) remains unchanged."
+        "All previously created heart notes are visible on the HeartCanvas after page load.",
+        "The useQueries hook correctly fetches and returns the list of heart notes from the backend actor.",
+        "No console errors related to heart note fetching or rendering.",
+        "Newly added heart notes appear on the canvas immediately after creation.",
+        "Heart notes persist across page refreshes."
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Add an `updatePosition` backend function to the HeartNote actor that accepts a note ID and new x/y percentage coordinates and updates the stored position for that note.",
+      "text": "Verify that the backend's heart note list and CRUD functions (add, get, list, edit, delete) are functioning correctly and returning data as expected. If the Version 7 deployment introduced any state loss or schema change, restore or migrate the data appropriately.",
       "target": "backend",
       "source": {
         "messageIds": [
-          "msg-4"
+          "msg-7"
         ],
         "quotes": [
-          "move the hearts around to my desired location"
+          "my hearts are gone"
         ]
       },
       "acceptanceCriteria": [
-        "A new `updatePosition(id: Text, x: Float, y: Float)` (or equivalent) function exists in backend/main.mo.",
-        "Calling it with a valid ID updates the x/y coordinates of that HeartNote in the Map.",
-        "Calling it with an invalid ID returns an appropriate error/null."
-      ]
-    },
-    {
-      "id": "REQ-3",
-      "text": "Add a `useUpdateHeartPosition` mutation hook in useQueries.ts that calls the backend `updatePosition` function and invalidates the heart notes query on success.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-4"
-        ],
-        "quotes": [
-          "move the hearts around to my desired location"
-        ]
-      },
-      "acceptanceCriteria": [
-        "A `useUpdateHeartPosition` mutation hook is defined and exported from useQueries.ts.",
-        "On success it invalidates the heartNotes query cache so the canvas re-renders with updated positions.",
-        "The hook is used by HeartCanvas to persist positions after a drag-and-drop."
+        "The backend `list` function returns all stored heart notes without error.",
+        "Calling `add` creates a new heart note that is subsequently returned by `list`.",
+        "The backend stable state is intact and no heart note data has been lost due to upgrade issues."
       ]
     }
   ],
   "constraints": [
-    "Do not change any existing functionality — heart add, edit, delete, NoteCard popup, personal greeting, admin editor, floating petals, and all visual styles must remain exactly as in Version 6.",
-    "Do not edit any files under frontend/src/hooks/useActor.ts, frontend/src/hooks/useInternetIdentity.ts, frontend/src/main.tsx, or frontend/src/components/ui.",
-    "Heart positions must be stored as percentages (not pixels) so layout is responsive."
+    "Do not change the HeartNote data type schema unless required to fix the regression.",
+    "Do not modify files listed in frontend.immutablePaths."
   ],
   "nonGoals": [
-    "Reordering hearts by any means other than drag-and-drop.",
-    "Locking or pinning hearts in place.",
-    "Multi-select or group dragging of hearts.",
-    "Any visual redesign or theme changes."
+    "Adding new features to the heart notes system.",
+    "Redesigning the HeartCanvas UI.",
+    "Changing authentication or identity logic."
   ],
   "imageRequirements": {
     "required": [],

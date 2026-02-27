@@ -1,47 +1,32 @@
 {
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
-  "summary": "A canvas-based app where users can add hearts and messages, stored on the Internet Computer backend canister. Version 6 is the stable base; user wants to keep all existing functionality and add drag-to-reposition hearts feature.",
-  "architectural_notes": [
-    "Data (hearts and messages) is stored in an Internet Computer backend canister and persists across sessions."
+  "summary": "New project",
+  "architectural_notes": [],
+  "known_issues": [
+    "Hearts are missing/disappearing after Version 7 deployment"
   ],
-  "known_issues": [],
-  "isFixRequest": false,
+  "isFixRequest": true,
   "existing_features": [
     {
-      "id": "feature-add-a-drag-and-drop-interaction-to-each-heart-icon-on-the-heartcanvas-so-users-can-click-and-drag-a-heart-to-reposition-it-anywhere-on-the-canvas-while-dragging-the-heart-should-follow-the-cursor-smoothly-on-drop-the-new-position-as-percentage-coordinates-relative-to-the-canvas-must-be-persisted-to-the-backend",
-      "title": "Add a drag-and-drop interaction to each heart icon on the HeartCanvas so users can click and drag a heart to reposition it anywhere on the canvas. While dragging, the heart should follow the cursor smoothly. On drop, the new position (as percentage coordinates relative to the canvas) must be persisted to the backend.",
+      "id": "feature-investigate-and-fix-the-issue-causing-all-heart-notes-to-disappear-from-the-heartcanvas-after-the-version-7-deployment-ensure-that-previously-stored-heart-notes-are-correctly-fetched-from-the-backend-and-rendered-on-the-canvas",
+      "title": "Investigate and fix the issue causing all heart notes to disappear from the HeartCanvas after the Version 7 deployment. Ensure that previously stored heart notes are correctly fetched from the backend and rendered on the canvas.",
       "reqIds": [
         "REQ-1"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-add-a-useupdateheartposition-mutation-hook-in-usequeries-ts-that-calls-the-backend-updateposition-function-and-invalidates-the-heart-notes-query-on-success",
-      "title": "Add a `useUpdateHeartPosition` mutation hook in useQueries.ts that calls the backend `updatePosition` function and invalidates the heart notes query on success.",
-      "reqIds": [
-        "REQ-3"
       ],
       "version": 1
     }
   ],
   "new_feature_requests": [
     {
-      "id": "AR-1",
-      "summary": "Allow users to drag and move hearts to desired positions on the canvas",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-3",
-      "summary": "Add an `updatePosition` backend function to the HeartNote actor that accepts a note ID and new x/y percentage coordinates and updates the stored position for that note.",
+      "id": "AR-2",
+      "summary": "Verify that the backend's heart note list and CRUD functions (add, get, list, edit, delete) are functioning correctly and returning data as expected. If the Version 7 deployment introduced any state loss or schema change, restore or migrate the data appropriately.",
       "reqIds": [
         "REQ-2"
       ],
       "status": "pending"
     }
   ],
-  "gameProjectType": "none",
   "projectName": "Someone Special",
   "clarification_mode": "instant",
   "clarification_rounds": 0

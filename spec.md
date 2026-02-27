@@ -1,12 +1,11 @@
 # Specification
 
 ## Summary
-**Goal:** Allow users to drag and reposition heart icons anywhere on the HeartCanvas, with positions persisted to the backend.
+**Goal:** Fix the regression introduced in Version 7 that caused all heart notes to disappear from the HeartCanvas.
 
 **Planned changes:**
-- Add drag-and-drop interaction to each heart on HeartCanvas so it follows the cursor while dragging and drops to a new position
-- Distinguish between a click (opens NoteCard popup) and a drag (repositions heart) so existing popup behavior is preserved
-- Add an `updatePosition(id, x, y)` function to the backend HeartNote actor that updates a note's stored x/y coordinates (as percentages)
-- Add a `useUpdateHeartPosition` mutation hook in useQueries.ts that calls the backend function and invalidates the heartNotes query cache on success
+- Investigate and fix the frontend data-fetching logic (useQueries hook) to correctly retrieve heart notes from the backend and render them on the canvas.
+- Verify the backend CRUD functions (list, add, get, edit, delete) are working correctly and returning stored heart note data.
+- Ensure backend stable state is intact and no data was lost due to the Version 7 upgrade; restore or migrate data if necessary.
 
-**User-visible outcome:** Users can click and drag any heart on the canvas to move it to their desired location; the new position is saved and persists after page refresh, while all existing functionality (add, edit, delete, NoteCard popup) remains unchanged.
+**User-visible outcome:** All previously created heart notes reappear on the HeartCanvas after page load, persist across refreshes, and newly added hearts appear immediately after creation.

@@ -1,45 +1,38 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Add drag-to-reposition hearts on the canvas",
+  "title": "Fix missing hearts after Version 7 deployment",
   "requirements": [
     {
       "id": "REQ-1",
-      "summary": "Add a drag-and-drop interaction to each heart icon on the HeartCanvas so users can click and drag a heart to reposition it anywhere on the canvas, with smooth cursor following and backend persistence of new positions as percentage coordinates.",
+      "summary": "Investigate and fix the issue causing all heart notes to disappear from the HeartCanvas after the Version 7 deployment. Ensure that previously stored heart notes are correctly fetched from the backend and rendered on the canvas.",
       "acceptanceCriteria": [
-        "Each heart on the canvas can be dragged by clicking and holding it.",
-        "While dragging, the heart visually follows the mouse cursor.",
-        "Dropping the heart anywhere on the canvas updates its position.",
-        "The new position is saved to the backend (x/y as percentages of canvas dimensions) so it persists after page refresh.",
-        "Clicking a heart (without dragging) still opens its NoteCard popup as before.",
-        "All existing heart functionality (add, edit, delete, NoteCard popup) remains unchanged."
+        "All previously created heart notes are visible on the HeartCanvas after page load.",
+        "The useQueries hook correctly fetches and returns the list of heart notes from the backend actor.",
+        "No console errors related to heart note fetching or rendering.",
+        "Newly added heart notes appear on the canvas immediately after creation.",
+        "Heart notes persist across page refreshes."
       ],
       "file_operations": [
+        {
+          "path": "frontend/src/hooks/useQueries.ts",
+          "operation": "modify",
+          "description": "Review and fix the useAllHeartNotes query hook to ensure it correctly calls the backend's getAllHeartNotes method and handles the response properly. Verify that the query key, enabled condition, and actor dependency are correctly configured to trigger fetching when the actor is available. Add error handling and logging to diagnose any fetch failures."
+        },
         {
           "path": "frontend/src/components/HeartCanvas.tsx",
           "operation": "modify",
-          "description": "Add drag-and-drop interaction handlers (onMouseDown, onMouseMove, onMouseUp) to each heart icon. Track dragging state (isDragging, draggedHeartId, dragOffset) to differentiate between click and drag gestures. While dragging, update the heart's position to follow the cursor smoothly using inline styles. On drop, calculate the new position as percentages of the canvas dimensions and call the useUpdateHeartPosition mutation to persist the change. Ensure that a simple click (without drag movement) still opens the NoteCard popup as before. Maintain all existing smart card layout logic for NoteCard positioning."
+          "description": "Verify that the HeartCanvas component correctly consumes the useAllHeartNotes hook data and renders all heart notes on the canvas. Ensure that the loading state is properly handled and that heart notes are displayed as soon as data is available. Add console logging to verify that heart note data is being received and mapped correctly to the UI. Confirm that position values are correctly interpreted as percentage-based coordinates."
         },
         {
-          "path": "frontend/src/hooks/useQueries.ts",
+          "path": "frontend/src/hooks/useActor.ts",
           "operation": "modify",
-          "description": "Add a useUpdateHeartPosition mutation hook that calls the backend updatePosition function with the note ID and new [x, y] percentage coordinates. On success, invalidate the heartNotes query cache to trigger a re-fetch and update the canvas display. Export the new hook alongside existing mutation hooks."
-        }
-      ]
-    },
-    {
-      "id": "REQ-3",
-      "summary": "Add a useUpdateHeartPosition mutation hook in useQueries.ts that calls the backend updatePosition function and invalidates the heart notes query on success.",
-      "acceptanceCriteria": [
-        "A `useUpdateHeartPosition` mutation hook is defined and exported from useQueries.ts.",
-        "On success it invalidates the heartNotes query cache so the canvas re-renders with updated positions.",
-        "The hook is used by HeartCanvas to persist positions after a drag-and-drop."
-      ],
-      "file_operations": [
+          "description": "Verify that the useActor hook correctly initializes and returns the backend actor instance. Ensure that the actor is created with the correct canister ID and that any authentication state changes properly trigger actor recreation. Add logging to confirm actor initialization and verify that the actor methods are callable."
+        },
         {
-          "path": "frontend/src/hooks/useQueries.ts",
+          "path": "frontend/src/components/AddHeartForm.tsx",
           "operation": "modify",
-          "description": "Define and export useUpdateHeartPosition as a useMutation hook that accepts (id: string, newPosition: [number, number]) and calls backend.updatePosition(id, newPosition). On success, call queryClient.invalidateQueries(['heartNotes']) to refresh the canvas with updated positions. Follow the same pattern as useEditHeartNote and useDeleteHeartNote for consistency."
+          "description": "Ensure that the AddHeartForm component uses the correct mutation hook for adding heart notes and that successful additions trigger a query invalidation to refresh the displayed hearts list. Verify that the position parameter passed to addHeartNote matches the expected [number, number] tuple format and that all required parameters (id, creator, message, timestamp, position) are provided correctly."
         }
       ]
     }
