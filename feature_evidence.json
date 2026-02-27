@@ -1,0 +1,23 @@
+{
+  "kind": "feature_evidence_report",
+  "features": [
+    {
+      "featureId": "feature-fix-the-text-visibility-and-contrast-issue-for-heart-note-messages-notecard-popups-displayed-at-the-bottom-of-the-site-ensure-the-note-text-creator-name-and-date-are-clearly-readable-against-their-background-in-all-positions-on-the-canvas-applying-sufficient-contrast-ratios-and-appropriate-text-color-overrides-so-the-romantic-styling-does-not-obscure-legibility",
+      "featureTitle": "Fix the text visibility and contrast issue for heart note messages/NoteCard popups displayed at the bottom of the site. Ensure the note text, creator name, and date are clearly readable against their background in all positions on the canvas, applying sufficient contrast ratios and appropriate text color overrides so the romantic styling does not obscure legibility.",
+      "files": [
+        "frontend/src/components/NoteCard.tsx"
+      ],
+      "components": [
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-8"
+      ],
+      "confidence": "high"
+    }
+  ]
+}

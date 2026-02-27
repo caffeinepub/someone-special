@@ -1,0 +1,22 @@
+{
+  "backend/main.mo": "Motoko actor implementing a heart notes backend with CRUD operations (add, edit, get, delete, list) for HeartNote records stored in a Map, plus a personal greeting message that can be read and updated.",
+  "feature_evidence.json": "Feature evidence report linking the NoteCard text visibility/contrast fix to the file frontend/src/components/NoteCard.tsx and test requirement REQ-8.",
+  "frontend-file-summaries.txt": "JSON document containing one-sentence summaries of each frontend source file, serving as a reference overview of the project's frontend components and hooks.",
+  "frontend/index.css": "Tailwind base stylesheet defining OKLCH CSS custom properties for light and dark theme color tokens used throughout the app.",
+  "frontend/index.html": "Minimal HTML entry point titled 'Someone Special' that mounts the React app into a root div and loads the main TypeScript module.",
+  "frontend/src/App.tsx": "Root React component that composes the full page layout including the header, hero banner, PersonalGreeting, HeartCanvas, AddHeartForm, AdminGreetingEditor, and EditNoteModal with note fetch/delete logic.",
+  "frontend/src/components/AddHeartForm.tsx": "Collapsible form component for creating new heart notes with message and optional creator fields, random position generation, and a success animation on submission.",
+  "frontend/src/components/AdminGreetingEditor.tsx": "Collapsible admin panel component for editing and saving the site's personal greeting message, with a pre-filled textarea, character counter, and success feedback.",
+  "frontend/src/components/EditNoteModal.tsx": "A modal dialog component for editing an existing HeartNote's message, with a textarea, character counter, and save/cancel actions using the useEditHeartNote mutation.",
+  "frontend/src/components/FloatingPetals.tsx": "A decorative background component that renders 18 randomly positioned animated floating heart/petal SVGs using deterministic random values memoized on mount.",
+  "frontend/src/components/HeartCanvas.tsx": "A canvas component that displays HeartNote objects as clickable animated heart icons at percentage-based positions, showing a NoteCard popup on click with edit/delete support.",
+  "frontend/src/components/NoteCard.tsx": "A styled popup card component that displays a HeartNote's message, creator, and date, with optional edit and delete action buttons and a directional arrow pointer.",
+  "frontend/src/components/PersonalGreeting.tsx": "Displays a personalized greeting message fetched via usePersonalGreeting, showing a loading animation while fetching and falling back to a default message if none is set.",
+  "frontend/src/hooks/useActor.ts": "A hook that creates and caches an ICP backend actor (authenticated or anonymous) based on the current Internet Identity, invalidating dependent queries whenever the actor changes.",
+  "frontend/src/hooks/useInternetIdentity.ts": "Provides an InternetIdentityProvider and useInternetIdentity hook for managing ICP Internet Identity authentication state, including login, logout, and identity persistence via AuthClient.",
+  "frontend/src/hooks/useQueries.ts": "Defines React Query hooks for all backend operations: fetching, adding, editing, and deleting HeartNotes, as well as getting and updating the personal greeting message.",
+  "frontend/src/index.css": "Global CSS file that imports Google Fonts (Playfair Display, Lato), sets up Tailwind directives, defines a romantic rose/blush/cream CSS variable palette for light and dark modes, and declares custom keyframe animations (floating petals, heart pulse, shimmer, etc.).",
+  "frontend/src/main.tsx": "React app entry point that wraps the App component with QueryClientProvider (React Query) and InternetIdentityProvider before mounting to the DOM.",
+  "frontend/tailwind.config.js": "Tailwind CSS configuration extending the theme with custom fonts (Playfair Display, Lato), oklch-based color tokens mapped to CSS variables, custom border radii, box shadows, and keyframe animations for a romantic UI.",
+  "project_state.json": "Project state metadata (version 7) describing a romantic interactive heart-notes website, listing existing features, known issues (text visibility on notes), and architectural notes for build planning."
+}
